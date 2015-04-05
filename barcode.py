@@ -11,7 +11,7 @@ def progTerm(signal,frame):
 	exit()
 
 signal.signal(signal.SIGINT,progTerm)
-out_file = open("log_accessi.csv","w")
+out_file = open("log_accessi.csv","a")
 print "I dati delle scansioni vengono visualizzati a video e salvati sul file log_accessi.csv"
 print "Per terminare il programma usa Control+C"
 print "Al momento la gestione delle operazioni si basa su input utente che indica manualmente se le letture riguardano entrata o uscita"
