@@ -30,13 +30,14 @@ except ImportError:
 def register_data(id):
 	server=ConfigSectionMap("Server")
 	action=ConfigSectionMap("Action")
+	details=ConfigSectionMap("Details")
 
 	c = pycurl.Curl()
 	register_code_url=server['protocol'] + '://' + server['address'] + ':' + server['port'] + '/' + server['url'] 
 	print register_code_url
 	c.setopt(c.URL, register_code_url)
 
-	post_data = {'id': id , 'action' : action['direction'] }
+	post_data = {'id': id , 'action' : action['direction'], 'time' : time.strftime('%Y-%m-%d %H:%M:%S') , 'operator' : details['operator'] }
 	# Form data must be provided already urlencoded.
 	postfields = urlencode(post_data)
 	print postfields
@@ -48,6 +49,8 @@ def register_data(id):
 	c.perform()
 	c.close()
 
+        #out_file.write(id + ";" + action['direction'] + ";" + time.strftime('%Y-%m-%d %H:%M:%S') + ";" + details['operator'] + "\n")
+        out_file.write( id + ";" + action['direction'] + ";" + time.strftime('%Y-%m-%d %H:%M:%S') + ";" + details['operator'] + ";" + "\n")
 
 # setup a callback
 def handle_webcam_lib(proc, image, closure):
@@ -63,7 +66,9 @@ Config = ConfigParser.ConfigParser()
 Config.read("config.ini")
 Config.sections()
 
-print ConfigSectionMap("Input")['method']
+out_file = open("log_accessi.csv","a")
+
+#print ConfigSectionMap("Input")['method']
 
 if ConfigSectionMap("Input")['method'] == "webcam_lib":
 
@@ -100,13 +105,8 @@ if ConfigSectionMap("Input")['method'] == "webcam_os":
 		code = p.readline()
 		print 'BarCode/QrCode:', code
 		id = code.split(':')[1]
-		register_data(id)
+		register_data(id[:-1])
 
 if ConfigSectionMap("Input")['method'] == "manual":
-	out_file = open("log_accessi.csv","a")
-	print "Direzione?"
-	direzione=raw_input('Le letture sono per Entrata(E) o Uscita(U)?')
-        input = raw_input('Inserisci un valore: ')
-        print time.strftime('%Y-%m-%d %H:%M:%S') + ";" + direzione + ";" + input
-        out_file.write(time.strftime('%Y-%m-%d %H:%M:%S') + ";" + direzione + ";" + input + "\n")
+        id = raw_input('Inserisci un valore: ')
 	register_data(id)
