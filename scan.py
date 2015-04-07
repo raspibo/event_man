@@ -6,6 +6,16 @@ import ConfigParser
 from sys import argv
 import zbar
 import time 
+import signal
+
+
+def signal_handler(signal, frame):
+    print 'You pressed Ctrl+C!'
+    out_file.close()
+    exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+print 'Premi Ctrl+C per uscire'
 
 def ConfigSectionMap(section):
 	dict1 = {}
@@ -37,7 +47,7 @@ def register_data(id):
 	print register_code_url
 	c.setopt(c.URL, register_code_url)
 
-	post_data = {'id': id , 'action' : action['direction'], 'time' : time.strftime('%Y-%m-%d %H:%M:%S') , 'operator' : details['operator'] }
+	post_data = {'ebqrcode': id , 'action' : action['direction'], 'time' : time.strftime('%Y-%m-%d %H:%M:%S') , 'operator' : details['operator'] }
 	# Form data must be provided already urlencoded.
 	postfields = urlencode(post_data)
 	print postfields
@@ -66,7 +76,7 @@ Config = ConfigParser.ConfigParser()
 Config.read("config.ini")
 Config.sections()
 
-out_file = open("log_accessi.csv","a")
+out_file = open(ConfigSectionMap("Local")['logfile'],"a")
 
 #print ConfigSectionMap("Input")['method']
 
@@ -108,5 +118,6 @@ if ConfigSectionMap("Input")['method'] == "webcam_os":
 		register_data(id[:-1])
 
 if ConfigSectionMap("Input")['method'] == "manual":
-        id = raw_input('Inserisci un valore: ')
-	register_data(id)
+	while True:
+        	id = raw_input('Inserisci un valore: ')
+		register_data(id)
