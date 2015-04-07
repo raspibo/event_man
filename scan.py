@@ -117,7 +117,7 @@ if ConfigSectionMap("Input")['method'] == "webcam_os":
 		id = code.split(':')[1]
 		register_data(id[:-1])
 
-if ConfigSectionMap("Input")['method'] == "manual":
+if ConfigSectionMap("Input")['method'] == "manual" or ConfigSectionMap("Input")['method'] == "barcode_reader":
 	while True:
         	id = raw_input('Inserisci un valore: ')
 		register_data(id)
