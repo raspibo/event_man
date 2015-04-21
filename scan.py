@@ -7,7 +7,7 @@ from sys import argv
 import zbar
 import time 
 import signal
-
+import json
 
 def signal_handler(signal, frame):
     print 'You pressed Ctrl+C!'
@@ -41,26 +41,36 @@ def register_data(id):
 	server=ConfigSectionMap("Server")
 	action=ConfigSectionMap("Action")
 	details=ConfigSectionMap("Details")
-
+	event=ConfigSectionMap("Event")
 	c = pycurl.Curl()
-	register_code_url=server['protocol'] + '://' + server['address'] + ':' + server['port'] + '/' + server['url'] 
+	register_code_url=server['protocol'] + '://' + server['address'] + ':' + server['port'] + '/events/' + event['id'] + '/persons/' + id 
 	print register_code_url
 	c.setopt(c.URL, register_code_url)
+	c.setopt(c.HTTPHEADER, [
+	    'Content-Type: application/json',
+	])
+	#work from cli
+	#curl -X PUT -H "Content-Type: application/json" -d '{"_id":"552591560025e836ebc92ed5","person_id":"5525907068ee09fee438fef5","attended":false}' http://lela.ismito.it:5242/events/552591560025e836ebc92ed5/persons/5525907068ee09fee438fef5
+	date=time.strftime('%Y-%m-%dT%H:%M:%SZ')
+	put_data = json.dumps({"attended":True , "checkin_datetime": date});
 
-	post_data = {'ebqrcode': id , 'action' : action['direction'], 'time' : time.strftime('%Y-%m-%d %H:%M:%S') , 'operator' : details['operator'] }
+	print put_data
+	c.setopt(c.CUSTOMREQUEST, "PUT")
+
 	# Form data must be provided already urlencoded.
-	postfields = urlencode(post_data)
-	print postfields
+	#postfields = urlencode(post_data)
+	#print postfields
 	# Sets request method to POST,
 	# Content-Type header to application/x-www-form-urlencoded
 	# and data to send in request body.
-	c.setopt(c.POSTFIELDS, postfields)
+	#c.setopt(c.POSTFIELDS, postfields)
+	c.setopt(c.POSTFIELDS, put_data)
 
 	c.perform()
 	c.close()
 
         #out_file.write(id + ";" + action['direction'] + ";" + time.strftime('%Y-%m-%d %H:%M:%S') + ";" + details['operator'] + "\n")
-        out_file.write( id + ";" + action['direction'] + ";" + time.strftime('%Y-%m-%d %H:%M:%S') + ";" + details['operator'] + ";" + "\n")
+        out_file.write( event['id'] + ";" + id + ";" + "True" + ";" + date  + "\n")
 
 # setup a callback
 def handle_webcam_lib(proc, image, closure):
