@@ -5,7 +5,7 @@ import pycurl
 import ConfigParser
 from sys import argv
 import zbar
-import time 
+from time import gmtime, strftime
 import signal
 import json
 
@@ -43,7 +43,7 @@ def register_data(id):
 	details=ConfigSectionMap("Details")
 	event=ConfigSectionMap("Event")
 	c = pycurl.Curl()
-	register_code_url=server['protocol'] + '://' + server['address'] + ':' + server['port'] + '/events/' + event['id'] + '/persons/' + id 
+	register_code_url=server['protocol'] + '://' + server['address'] + ':' + server['port'] + '/events/' + event['id'] + '/persons/?ebqrcode=' + id 
 	print register_code_url
 	c.setopt(c.URL, register_code_url)
 	c.setopt(c.HTTPHEADER, [
@@ -51,7 +51,7 @@ def register_data(id):
 	])
 	#work from cli
 	#curl -X PUT -H "Content-Type: application/json" -d '{"_id":"552591560025e836ebc92ed5","person_id":"5525907068ee09fee438fef5","attended":false}' http://lela.ismito.it:5242/events/552591560025e836ebc92ed5/persons/5525907068ee09fee438fef5
-	date=time.strftime('%Y-%m-%dT%H:%M:%SZ')
+	date=strftime('%Y-%m-%dT%H:%M:%SZ',gmtime())
 	put_data = json.dumps({"attended":True , "checkin_datetime": date});
 
 	print put_data
