@@ -45,6 +45,12 @@ def register_data(id):
 	c = pycurl.Curl()
 	register_code_url=server['protocol'] + '://' + server['address'] + ':' + server['port'] + '/events/' + event['id'] + '/persons/?ebqrcode=' + id 
 	print register_code_url
+	if server['protocol'] == "https":
+		c.setopt(pycurl.SSL_VERIFYPEER, 1)
+		#c.setopt(pycurl.SSL_VERIFYHOST, 2) # Use this line  for a production server
+		c.setopt(pycurl.SSL_VERIFYHOST, 0)  # Use this to laboratory env
+		c.setopt(pycurl.CAINFO, server['ca_cert_path'])
+
 	c.setopt(c.URL, register_code_url)
 	c.setopt(c.HTTPHEADER, [
 	    'Content-Type: application/json',
