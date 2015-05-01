@@ -53,9 +53,8 @@ def register_data(id_):
     ])
     #work from cli
     #curl -X PUT -H "Content-Type: application/json" -d '{"_id":"552591560025e836ebc92ed5","person_id":"5525907068ee09fee438fef5","attended":false}' http://lela.ismito.it:5242/events/552591560025e836ebc92ed5/persons/5525907068ee09fee438fef5
-    date = strftime('%Y-%m-%dT%H:%M:%SZ',gmtime())
-    put_data = json.dumps({"attended":True , "checkin_datetime": date});
-
+    date = strftime('%Y-%m-%dT%H:%M:%SZ', gmtime())
+    put_data = action['data'].replace('%NOW%', date).strip()
     print put_data
     c.setopt(c.CUSTOMREQUEST, "PUT")
 
