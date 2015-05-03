@@ -10,6 +10,7 @@ import signal
 
 def signal_handler(signal, frame):
     print 'You pressed Ctrl+C!'
+    logging.debug('exiting on user request')
     exit(0)
 
 
@@ -23,10 +24,10 @@ def config_options(section):
         try:
             dict1[option] = config.get(section, option)
             if dict1[option] == -1:
-                print("skip: %s" % option)
-        except:
-                print("exception on %s!" % option)
-                dict1[option] = None
+                logging.warn("skip: %s" % option)
+        except Exception, e:
+            logging.warn("exception on %s: %s" % (option, e))
+            dict1[option] = None
     return dict1
 
 
@@ -40,13 +41,14 @@ def register_data(id_, session):
             event['id'],
             event['person_query_key'],
             id_)
-    print register_code_url
-
     date = strftime('%Y-%m-%dT%H:%M:%SZ', gmtime())
     put_data = action['data'].replace('%NOW%', date).strip()
-    print put_data
-    session.put(register_code_url, data=put_data)
-    logging.debug(event['id'] + ";" + id_ + ";" + "True" + ";" + date)
+    logging.debug('PUT url: %s' % register_code_url)
+    logging.debug('PUT data: %s' % put_data)
+    response = session.put(register_code_url, data=put_data)
+    logging.debug('PUT response status_code: %d' % response.status_code)
+    if response.status_code != 200:
+        logging.error('PUT response reply: %d' % response.text)
 
 
 # setup a callback
@@ -54,7 +56,7 @@ def handle_webcam_lib(session, proc, image, closure):
         # extract results
         for symbol in image.symbols:
             # do something useful with results
-            print 'decoded', symbol.type, 'symbol', '"%s"' % symbol.data
+            logging.debug('webcam_lib decoded type:%s symbol:%s' % (symbol.type, symbol.data))
             id_ = symbol.data
             register_data(id_, session)
 
@@ -64,7 +66,6 @@ def run_webcam_lib(session):
     # create a Processor
     proc = zbar.Processor()
     # configure the Processor
-    proc.parse_config('enable')
     proc.init(device)
     proc.set_data_handler(lambda *args: handle_webcam_lib(session, *args))
     # enable the preview window
@@ -83,7 +84,7 @@ def run_webcam_os(session):
     p = os.popen('/usr/bin/zbarcam ' + device , 'r')
     while True:
         code = p.readline()
-        print 'BarCode/QrCode:', code
+        logging.debug('webcam_os barcode/qrcode:%s' % code)
         id_ = code.split(':')[1]
         register_data(id_[:-1], session)
 
@@ -115,6 +116,13 @@ def get_session():
 
 
 def run():
+    if config_options('Local').get('logfile'):
+        logger = logging.getLogger()
+        hdlr = logging.FileHandler(config_options('Local')['logfile'])
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        hdlr.setFormatter(formatter)
+        logger.addHandler(hdlr)
+        logger.setLevel(logging.DEBUG)
     signal.signal(signal.SIGINT, signal_handler)
     print 'Premi Ctrl+C per uscire'
     session = get_session()
