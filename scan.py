@@ -124,8 +124,13 @@ def run():
         logger.addHandler(hdlr)
         logger.setLevel(logging.DEBUG)
     signal.signal(signal.SIGINT, signal_handler)
+    try:
+        session = get_session()
+    except Exception, e:
+        logging.error('unable to connect: %s' % e)
+        print 'unable to connect: %s' % e
+        return
     print 'Premi Ctrl+C per uscire'
-    session = get_session()
     if config_options("Input")['method'] == "webcam_lib":
         run_webcam_lib(session)
     elif config_options("Input")['method'] == "webcam_os":
