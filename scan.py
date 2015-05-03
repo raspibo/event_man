@@ -1,26 +1,27 @@
 #!/usr/bin/python
 import os
 import pycurl
+import logging
 import ConfigParser
 import zbar
 from time import gmtime, strftime
 import signal
-import json
+
 
 def signal_handler(signal, frame):
     print 'You pressed Ctrl+C!'
-    out_file.close()
     exit(0)
 
-signal.signal(signal.SIGINT, signal_handler)
-print 'Premi Ctrl+C per uscire'
 
-def ConfigSectionMap(section):
+def config_options(section):
     dict1 = {}
-    options = Config.options(section)
+    config = ConfigParser.ConfigParser()
+    config.read("config.ini")
+    config.sections()
+    options = config.options(section)
     for option in options:
         try:
-            dict1[option] = Config.get(section, option)
+            dict1[option] = config.get(section, option)
             if dict1[option] == -1:
                 print("skip: %s" % option)
         except:
@@ -30,10 +31,10 @@ def ConfigSectionMap(section):
 
 
 def register_data(id_):
-    server = ConfigSectionMap("Server")
-    action = ConfigSectionMap("Action")
-    details = ConfigSectionMap("Details")
-    event = ConfigSectionMap("Event")
+    server = config_options("Server")
+    action = config_options("Action")
+    details = config_options("Details")
+    event = config_options("Event")
     c = pycurl.Curl()
     register_code_url = '%s/events/%s/persons/?%s=%s' % (
             server['url'].rstrip('/'),
@@ -51,84 +52,71 @@ def register_data(id_):
     c.setopt(c.HTTPHEADER, [
         'Content-Type: application/json',
     ])
-    #work from cli
-    #curl -X PUT -H "Content-Type: application/json" -d '{"_id":"552591560025e836ebc92ed5","person_id":"5525907068ee09fee438fef5","attended":false}' http://lela.ismito.it:5242/events/552591560025e836ebc92ed5/persons/5525907068ee09fee438fef5
     date = strftime('%Y-%m-%dT%H:%M:%SZ', gmtime())
     put_data = action['data'].replace('%NOW%', date).strip()
     print put_data
     c.setopt(c.CUSTOMREQUEST, "PUT")
-
-    # Form data must be provided already urlencoded.
-    #postfields = urlencode(post_data)
-    #print postfields
-    # Sets request method to POST,
-    # Content-Type header to application/x-www-form-urlencoded
-    # and data to send in request body.
-    #c.setopt(c.POSTFIELDS, postfields)
     c.setopt(c.POSTFIELDS, put_data)
-
     c.perform()
     c.close()
+    logging.debug(event['id'] + ";" + id_ + ";" + "True" + ";" + date)
 
-    #out_file.write(id + ";" + action['direction'] + ";" + time.strftime('%Y-%m-%d %H:%M:%S') + ";" + details['operator'] + "\n")
-    out_file.write( event['id'] + ";" + id_ + ";" + "True" + ";" + date + "\n")
 
 # setup a callback
 def handle_webcam_lib(proc, image, closure):
     # extract results
         for symbol in image.symbols:
-        # do something useful with results
+            # do something useful with results
             print 'decoded', symbol.type, 'symbol', '"%s"' % symbol.data
 
-            id = symbol.data
-            register_data(id)
+            id_ = symbol.data
+            register_data(id_)
 
-Config = ConfigParser.ConfigParser()
-Config.read("config.ini")
-Config.sections()
 
-out_file = open(ConfigSectionMap("Local")['logfile'],"a")
-
-#print ConfigSectionMap("Input")['method']
-
-if ConfigSectionMap("Input")['method'] == "webcam_lib":
-
-    device = ConfigSectionMap("Input")['device']
+def run_webcam_lib():
+    device = config_options("Input")['device']
     # create a Processor
     proc = zbar.Processor()
-
     # configure the Processor
     proc.parse_config('enable')
-
     proc.init(device)
-
     proc.set_data_handler(handle_webcam_lib)
-
     # enable the preview window
     proc.visible = True
-
     # initiate scanning
     proc.active = True
     try:
-    # keep scanning until user provides key/mouse input
+        # keep scanning until user provides key/mouse input
         proc.user_wait()
     except zbar.WindowClosed, e:
-        pass
+        logging.info('window closed: %s' % e)
 
 
-
-if ConfigSectionMap("Input")['method'] == "webcam_os":
-    device = ConfigSectionMap("Input")['device']
-    #p = os.popen('LD_PRELOAD=/usr/lib/i386-linux-gnu/libv4l/v4l1compat.so zbarcam --raw /dev/video0','r')
-    p = os.popen('/usr/bin/zbarcam ' + device ,'r')
-
+def run_webcam_os():
+    device = config_options("Input")['device']
+    p = os.popen('/usr/bin/zbarcam ' + device , 'r')
     while True:
         code = p.readline()
         print 'BarCode/QrCode:', code
-        id = code.split(':')[1]
-        register_data(id[:-1])
+        id_ = code.split(':')[1]
+        register_data(id_[:-1])
 
-if ConfigSectionMap("Input")['method'] == "manual" or ConfigSectionMap("Input")['method'] == "barcode_reader":
+def run_barcode():
     while True:
-        id = raw_input('Inserisci un valore: ')
-        register_data(id)
+        id_ = raw_input('Inserisci un valore: ')
+        register_data(id_)
+
+
+def run():
+    signal.signal(signal.SIGINT, signal_handler)
+    print 'Premi Ctrl+C per uscire'
+    if config_options("Input")['method'] == "webcam_lib":
+        run_webcam_lib()
+    elif config_options("Input")['method'] == "webcam_os":
+        run_webcam_os()
+    elif config_options("Input")['method'] == "manual" or config_options("Input")['method'] == "barcode_reader":
+        run_barcode()
+
+if __name__ == '__main__':
+    run()
+
