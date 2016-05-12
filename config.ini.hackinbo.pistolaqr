@@ -27,8 +27,8 @@ Device: /dev/video1
 #
 Url: https://localhost:5242
 Ca_cert_path: eventman_cert.pem
-Username: admin
-Password: eventman
+Username: pistolaqr
+Password: ingressomissile
 
 [Local]
 #Local log file
@@ -46,9 +46,9 @@ Person_query_key: seq_hex
 Direction: checkin
 # Data to send, JSON encoded.  It may contain the %NOW% placeholder that will be replaced with the current datetime.
 #Data: {"attended": true, "checkin_datetime": "%NOW%"}
-Data: {"afterenoon_attended": true, "afternoon_checkin_datetime": "%NOW%"}
+Data: {"attended": true, "checkin_datetime": "%NOW%"}
 #Direction: checkout
 
 [Details]
 #If you have multiple check point and you want to track single point assign a operator name
-Operator: eventman
+Operator: pistolaqr
