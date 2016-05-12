@@ -1,0 +1,54 @@
+[Input]
+#Manual insert of id with keyboard
+#Method: manual			
+#Use barcode_reader to use barcode gun reader 
+#Method: barcode_reader 	
+#This method use zbarcam os command (require apt-get install zbar-tools)
+#Method: webcam_os		
+#webcam_lib use puthon zbar module require sudo pip install zbar (optional? libzbar-dev)
+Method: webcam_lib
+
+#Method webcam_* require video device
+Device: /dev/video1
+
+# Useful commands for webcam
+# Show customizable parameters
+# v4l2-ctl --all
+# Read Video input : to find device id to use with following commands
+# v4l2-ctl -d 0 -c focus_auto=0
+# Lock focus for webcam
+# v4l2-ctl -d 0 -c focus_absolute=10
+# Disable auto exposure
+# v4l2-ctl -d 0 -c exposure_auto=1
+# Manual set exposure to maximum
+# v4l2-ctl -d 0 -c exposure_absolute=2047
+
+[Server]
+#
+Url: https://localhost:5242
+Ca_cert_path: 
+Username: admin
+Password: eventman
+
+[Local]
+#Local log file
+Logfile:eventman_scan.log
+
+[Event]
+#Define event to handle
+Id: 5558f43b4022be3ed1508eee
+# Key used to search for a registered person. 'ebqrcode' when scanning the QR Code, 'seq_hex' when we're scanning the barcode.
+#Person_query_key: seq_hex
+person_query_key: ebqrcode
+
+[Action]
+#Track checkin or checkout with this parameter
+Direction: checkin
+# Data to send, JSON encoded.  It may contain the %NOW% placeholder that will be replaced with the current datetime.
+Data: {"attended": true, "checkin_datetime": "%NOW%"}
+#Data: {"afterenoon_attended": true, "afternoon_checkin_datetime": "%NOW%"}
+#Direction: checkout
+
+[Details]
+#If you have multiple check point and you want to track single point assign a operator name
+Operator: eventman
