@@ -36,10 +36,10 @@ def register_data(id_, session):
     action = config_options("Action")
     details = config_options("Details")
     event = config_options("Event")
-    register_code_url = '%s/events/%s/persons/?%s=%s' % (
+    register_code_url = '%s/events/%s/tickets/?%s=%s' % (
             server['url'].rstrip('/'),
             event['id'],
-            event['person_query_key'],
+            event['ticket_query_key'],
             id_)
     date = strftime('%Y-%m-%dT%H:%M:%SZ', gmtime())
     put_data = action['data'].replace('%NOW%', date).strip()
